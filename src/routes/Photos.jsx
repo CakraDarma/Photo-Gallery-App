@@ -1,99 +1,139 @@
-import { useEffect } from "react";
-import { useState } from "react";
-import Card from "../components/Card";
+import { useEffect } from 'react';
+import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import Card from '../components/Card';
+import { useNavigate } from 'react-router-dom';
 
 const Photos = () => {
-  const [photos, setPhotos] = useState([]);
-  const [sort, setSort] = useState("asc");
-  const [submited, setSubmited] = useState("");
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+	const [photos, setPhotos] = useState([]);
+	const [sort, setSort] = useState('asc');
+	const [submited, setSubmited] = useState('');
+	const [search, setSearch] = useState('');
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState(null);
 
-  const deletePhoto = (id) => {
-    fetch(`https://gallery-app-server.vercel.app/photos${id}`,{method : "DELETE" })
-    .then(()=>{
-      const sementara = photos.filter((data)=>data.id !== id)
-      setPhotos(sementara)
-    })
-    // TODO: answer here
-  };
+	const navigate = useNavigate();
 
-  useEffect(() => {
-    setLoading(true);
-    fetch(`https://gallery-app-server.vercel.app/photos?_sort=id&_order=${sort}&q=${search}`)
-    .then((data)=> data.json())
-    .then((data) => {
-      setPhotos(data)
-      setLoading(false)
-    })
-    // TODO: answer here
-  }, [sort, submited]);
+	const deletePhoto = async (id) => {
+		try {
+			const response = await fetch(
+				`https://gallery-app-server.vercel.app/photos/${id}`,
+				{
+					method: 'DELETE',
+				}
+			);
+			console.log(response);
+			setPhotos((prevPhotos) => prevPhotos.filter((photo) => photo.id !== id));
 
-  useEffect(() => {
-    setLoading(true);
-    fetch("https://gallery-app-server.vercel.app/photos")
-    .then((data)=> data.json())
-    .then((data) => {
-      setPhotos(data)
-      setLoading(false)
-    })
-    // TODO: answer here
-  }, []);
+			// navigate('/photos');
+		} catch (e) {
+			console.log(e);
+		}
+	};
 
-  if (error) return <h1 style={{ width: "100%", textAlign: "center", marginTop: "20px" }} >Error!</h1>;
+	useEffect(() => {
+		const fetchFilterPhotos = async () => {
+			try {
+				setLoading(true);
+				const response = await fetch(
+					`https://gallery-app-server.vercel.app/photos?_sort=id&_order=${sort}&q=${search}`
+				);
+				const data = await response.json();
+				setPhotos(data);
+			} catch (e) {
+				setError(e);
+			}
+			setLoading(false);
+		};
+		fetchFilterPhotos();
+	}, [sort, submited]);
 
-  return (
-    <>
-      <div className="container">
-        <div className="options">
-          <select
-            onChange={(e) => setSort(e.target.value)}
-            data-testid="sort"
-            className="form-select"
-            style={{}}
-          >
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-          </select>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSubmited(search);
-            }}
-          >
-            <input
-              type="text"
-              data-testid="search"
-              onChange={(e) => setSearch(e.target.value)}
-              className="form-input"
-            />
-            <input
-              type="submit"
-              value="Search"
-              data-testid="submit"
-              className="form-btn"
-            />
-          </form>
-        </div>
-        <div className="content">
-          {loading ? (
-            <h1
-              style={{ width: "100%", textAlign: "center", marginTop: "20px" }}
-            >
-              Loading...
-            </h1>
-          ) : (
-            photos.map((photo) => {
-              return (
-                <Card key={photo.id} photo={photo} deletePhoto={deletePhoto} />
-              );
-            })
-          )}
-        </div>
-      </div>
-    </>
-  );
+	useEffect(() => {
+		const fetchPhotos = async () => {
+			try {
+				setLoading(true);
+				const response = await fetch(
+					'https://gallery-app-server.vercel.app/photos'
+				);
+				const data = await response.json();
+				setPhotos(data);
+				console.log(data);
+			} catch (e) {
+				setError(e);
+			}
+			setLoading(false);
+		};
+		fetchPhotos();
+	}, []);
+
+	if (error)
+		return (
+			<h1
+				style={{
+					width: '100%',
+					textAlign: 'center',
+					marginTop: '20px',
+				}}
+			>
+				Error!
+			</h1>
+		);
+
+	return (
+		<>
+			<div className='container'>
+				<div className='options'>
+					<select
+						onChange={(e) => setSort(e.target.value)}
+						data-testid='sort'
+						className='form-select'
+						style={{}}
+					>
+						<option value='asc'>Ascending</option>
+						<option value='desc'>Descending</option>
+					</select>
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							setSubmited(search);
+						}}
+					>
+						<input
+							type='text'
+							data-testid='search'
+							onChange={(e) => setSearch(e.target.value)}
+							className='form-input'
+						/>
+						<input
+							type='submit'
+							value='Search'
+							data-testid='submit'
+							className='form-btn'
+						/>
+					</form>
+				</div>
+				<div className='content'>
+					{loading ? (
+						<h1
+							style={{
+								width: '100%',
+								textAlign: 'center',
+								marginTop: '20px',
+							}}
+						>
+							Loading...
+						</h1>
+					) : (
+						photos.map((photo) => {
+							return (
+								<Card key={photo.id} photo={photo} deletePhoto={deletePhoto} />
+							);
+						})
+					)}
+				</div>
+			</div>
+		</>
+	);
 };
 
 export default Photos;
